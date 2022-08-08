@@ -1,0 +1,371 @@
+---
+title: "MP223-AEM for the Social Sciences SoSe-2022. Semester Project."
+author: "Amos Ouma. Matr.No.8105407"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  pdf_document:
+    toc: yes
+    number_sections: no
+    df_print: kable
+linkcolor: blue
+---
+
+# Motivation, introduction and explanation
+
+The goal of this exerciser is to solidify and practically apply data processing skills discussed in the class. We attempt to cover some components of the course in this exercise.
+
+> Your task is to (at least) reproduce results of econometric analysis shown below based on the pre-defined data, sets of requirements and only R Programming skills (without manual copy-paste) in R Markdown.
+
+One of the objective that we try to achieve by using R, RStudio, Rmarkdown and other complementary tools for executing this project is to trin the best practices and key concepts of [**Reproducible research with R and RStudio**](https://hds.hebis.de/ubgi/Record/HEB492016690)[^1] and [literate programming](https://en.wikipedia.org/wiki/Literate_programming).
+
+[^1]: To start with reproducible research using RMarkdown, see [Chapter 26 R4DS](https://r4ds.had.co.nz/communicate-intro.html). More comprehensive guide on reproducible research with R and its programming side is [R Markdown: The Definitive Guide](https://bookdown.org/yihui/rmarkdown/). Finally, the definitive guide is the book [Reproducible research with R and RStudio](https://hds.hebis.de/ubgi/Record/HEB492016690)
+
+Be accurate! As econometric analysis is not only about getting numbers right but also about communicating results clearly, this project scrutinizes the data manipulation skills to the limit (possibly). It does not mean that one need to specify all 16 digits after comma[^2] in tables. However, this means that you need to cherry pick what you display and what you don't, how you label plots' axes and where you leave them unnamed, what explanation you provide in the tables footnotes and how you call different columns.
+
+[^2]: As you may know, computers are quite inaccurate when it comes to computations with a floating point (non integer numbers). Usually, just after 16 digits after comma, computer returns random numbers. See, for example "Circle 1. Falling into the Floating Point Trap" (pp. 9-11) in [R Inferno](https://www.burns-stat.com/pages/Tutor/R_inferno.pdf) or read more about it in the [Floating-point arithmetic](https://en.wikipedia.org/wiki/Floating-point_arithmetic) article. Or guess what R would return for this comparison `.1 == .3/3`
+
+Do not be deterred... The key point of this exercise (also reflected in the bulk of the total grade for this work) is to reproduce actual results, while the communication details account for about one fifth of the final grade. However, learning R often happens when one attempts to clarify details and makes the story straight and clear for the reader.
+
+You are welcome to improve when preparing your homework! Please, **do demonstrate** what you have learned in data analysis and econometrics, what packages you've discovered, mastered and used, what improvements you've included and developed. You are not limited by the templates presented below. Any innovation may improve your grade[^3].
+
+[^3]: Unfortunately, there are reasonable limitations to what extent the grade could be improved. There is a maximum 100%, which cannot be exceeded and 80% of the grade is still about reproducing statistical results from the template solution, which cannot be compensated by the improved theam for plots or tables.
+
+Basic rules:
+
+-   **Zero plagiarism tolerance.** Although, reproducing same results may imply developing similar R code, there is still great variation between authors. This variation is not only about the naming conventions, but also about syntax, style, functional choices. Same operations could be made in dosens of ways in R. Make sure that you work on this individually and do not share your exact coding solutions. If you believe that many peers may have similar answers, add short description on where you've learned this answer from. Acknowledge, whom you cooperated in order to learn. Be creative! Please also note that in case of a detected plagiarism, examination office will be informed about a cheating attempt and respective university rules of examination will be applied in such case.
+
+-   **Deadline**. Three weeks after the examination period. Exact due date for this homework is on Ilias.
+
+-   **Grading**. This homework constitutes 40% of the final grade.
+
+-   **Submission** is on Ilias. You shell submit `.Rmd` file with you solution and rendered `HTML` or `pdf` document.
+
+-   **Specify** your name, surname and matriculation number in the `YAML` header of your project.
+
+```{r setup, include=FALSE}
+# load packages
+library(tidyverse)       # for data wrangling and plotting
+library(readr)       # install.packages("readr")
+library(readxl)      # install.packages("readxl")
+library(janitor)     # install.packages("janitor")
+library(skimr)       # install.packages("skimr")
+library(lubridate)   # install.packages("lubridate")
+library(vtable)      #install.packages("vtable")
+# set default theme and larger font size for ggplot2
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 16))
+
+# set default figure parameters for knitr
+knitr::opts_chunk$set(
+  fig.width = 8,
+  fig.asp = 0.618,
+  fig.retina = 3,
+  dpi = 300,
+  out.width = "80%",
+  echo = TRUE, 
+  message = TRUE, 
+  warning = TRUE
+)
+```
+
+# Problem Setting
+
+Nearly reproduce "Table 1 - Descriptive Statistics" from (Acemoglu et al. 2001)
+using data set `Acemoglu2001.csv`. Unfortunately, as mentioned by the
+author, it is not possible to reproduce exact the same numbers as they
+are in the paper. However, using the data set provided with this
+exercise, one can reproduce exact same data tables and plots as below.
+
+Before, reproducing data from the table, make sure that you do follow
+all data cleaning steps:
+
+-   filter out country that is called "notIndonesia";
+-   compute natural logarithm of the variables, GDP per capita, output
+    per worker and settlers mortality;
+
+```{r}
+## Write code for data loading here
+Acemoglu2001 <- read_csv("data/Acemoglu2001.csv")
+#
+#
+```
+
+In the data set, there are following variables:
+
+-   `iso` - Country code;
+
+-   `base_sample` - dummy variable indicating countries that constitute
+    a base sample;
+
+-   `africa`, `asia` and `other` - dummy variables indicating if a
+    country is in Africa, Asia or on another continent. Please note that
+    when all three dummy variables are equal to zero, that means that
+    the country is in Latin America.
+
+-   `pgp95` - GDP per capita (PPP) in 1995;
+
+-   `hjypl` - Log output per worker in 1988;
+
+-   `avexpr` - Average protection against expropriation risk,
+    1985--1995;
+
+-   `extmort4` - European settler mortality;
+
+-   `lat_abst` - absolute value of the latitude, where the country is
+    located;
+
+## Problem 1. Descriptive statistics (15 points)
+
+Produce a table with **descriptive statistics** (**mean** and **standard
+deviation**) for **all continuous variables** present in the sample
+**and their logarithm transformations** computed at the stage of data
+cleaning (continuous variables are transformed with a natural
+logarithm). Compute this summary statistics for **entire sample** of 164
+countries as well as for a **sub-sample of the base countries**.
+
+```{r}
+dta_clean <- read_csv("data/Acemoglu2001.csv")
+## Develop R code here...
+dta_clean<-slice(Acemoglu2001,-164)
+#Replacing NANs
+cleaned_dta<-dta_clean%>%
+  mutate(pgp95=replace(pgp95,is.na(pgp95),mean(pgp95,na.rm=TRUE)),
+  hjypl=replace(hjypl,is.na(hjypl),mean(hjypl,na.rm=TRUE)),
+  avexpr=replace(avexpr,is.na(avexpr),mean(avexpr,na.rm=TRUE)),
+  extmort4=replace(extmort4,is.na(extmort4),mean(extmort4,na.rm=TRUE)))
+
+cleaned_log<-cleaned_dta%>%
+  mutate(pgp95=log(pgp95),
+         hjypl=log(hjypl),
+         extmort4=log(extmort4))
+glimpse(cleaned_log)
+#Mean, Log and standard deviation
+table_means<-colMeans(cleaned_dta[ ,c("pgp95","hjypl","avexpr","extmort4")])
+table_means
+
+#Descriptive statistics for full sample
+sumtable(cleaned_dta, summ=c("mean(pgp95)","sd(pgp95)"))
+sumtable(cleaned_dta)
+glimpse(sumtable)
+
+summarise(cleaned_dta,obs=n(), sd_pgp95=sd(pgp95, na.rm = TRUE), 
+sd_hjypl =sd(hjypl, na.rm = TRUE),
+sd_avexpr= sd(avexpr, na.rm = TRUE), 
+sd_extmort4=sd(extmort4, na.rm = TRUE),
+sd_lat_abst = sd(lat_abst, na.rm = TRUE))
+glimpse(cleaned_dta)
+#
+```
+```{r}
+base_sample_stat<-filter(cleaned_dta, base_sample ==1)
+base_sample1<-base_sample_stat[, 6:10]
+sumtable(base_sample1)
+glimpse(sumtable)
+#Descriptive statistics after log transformation
+base_sample_statis<-filter(cleaned_log, base_sample==0)
+base_sample2<-base_sample_statis[, ! names(cleaned_log)%in% c("base_sample","africa","asia","other")]
+sumtable(base_sample2)
+glimpse(sumtable(base_sample2))
+```
+
+
+> Note: numbers in the columns correspond to means, standard deviations
+> are reported in the parentheses.
+
+If there are difficulties with reproducing exact table, use other
+conventional functions for the summary statistics in order to print same
+summary statistics in separate tables or text output. For example:
+
+
+## Problem 2. Means by quartiles (15 points)
+
+Use the same data to calculate means of the above mentioned contentious
+variables by quartiles of mortality for the base sample only. Quartiles
+of mortality are:
+
+1.  for mortality less than 65.4;
+
+2.  greater than or equal to 65.4 and less than 78.1;
+
+3.  greater than or equal to 78.1 and less than 280;
+
+4.  greater than or equal to 280;
+
+```{r}
+## Develop R code here...
+#for mortality less than 65.4
+Mortality<-base_sample1%>%
+filter(extmort4<=65.4)
+summarise(Mortality, obs=n(), mean = colMeans(Mortality, na.rm = TRUE),
+         log =log(mean)) 
+
+#Mortality greater than or equal to 65.4 and less than 78.1
+Mortality1<-filter(base_sample1, extmort4 >=65.4 & extmort4<78.1 )
+summarise(Mortality1, obs=n(), mean = colMeans(Mortality1, na.rm=TRUE),
+          log =log(mean))
+
+#Mortality greater than or equal to 78.1 and less than 280
+Mortality2<-filter(base_sample1, extmort4 >=78.1 & extmort4<280)
+summarise(Mortality2, obs=n(), mean = colMeans(Mortality2, na.rm=TRUE),
+          log =log(mean))
+
+#Mortality greater than or equal to 280;
+Mortality3<-filter(base_sample1, extmort4 >=280)
+summarise(Mortality3, obs=n(), mean = colMeans(Mortality3, na.rm=TRUE),log =log(mean))
+
+
+#
+#
+```
+
+## Problem 3. Visual inspection of the categorical and continuous data (15 points)
+
+Develop two box plots of the GDP per capita and European settler
+mortality by regions (Africa, Asia, Others and Latin America) for the
+base sample only.
+
+```{r}
+##box plot for GDP per capita
+Dataframe<-select(cleaned_dta, africa:pgp95)
+africa_dt<-filter(Dataframe, africa==1)
+asia_dt<-filter(Dataframe, asia==1)
+other_dt<-filter(Dataframe,other==1)
+Latin_America_dt<-filter(Dataframe,africa==0 & asia==0 & other==0)
+dt_boxplot<-rbind(africa_dt, asia_dt, other_dt, Latin_America_dt)
+GDP<-mutate(dt_boxplot, region= africa +asia +other)
+#Data distribution in GDP Dataset
+attach(GDP)
+GDP[51:92,5]<-2
+GDP[93:96,5]<-4
+GDP[97:163,5]<-3
+New_GDP<-GDP
+class(New_GDP$region)
+head(New_GDP$region,53)
+as.factor(New_GDP$rerion)
+New_GDP$region[New_GDP$region==1]<-"Africa"
+New_GDP$region[New_GDP$region==2]<-"Asia"
+New_GDP$region[New_GDP$region==3]<-"Latin.America"
+New_GDP$region[New_GDP$region==4]<-"Other"
+GDP_per_capita_1995<-pgp95
+boxplot(GDP_per_capita_1995~region, data = New_GDP,col=rainbow(4))
+
+```
+```{r}
+#box plot for mortality rate
+Dataframe1<-cleaned_dta[, ! names(cleaned_dta) %in%
+c("base_sample","iso","pgp95","hjypl","avexpr","lat_abst")]
+africa1_dta<-filter(Dataframe1, africa==1)
+asia1_dta<-filter(Dataframe1, asia==1)
+other1_dta<-filter(Dataframe1,other==1)
+Latin_America1_dta<-filter(Dataframe1,africa==0 & asia==0 & other==0)
+Mortality_rate<-rbind(africa1_dta, asia1_dta, other1_dta, Latin_America1_dta)
+New_Mortality_rate<-mutate(Mortality_rate, region= africa +asia +other)
+attach(New_Mortality_rate)
+New_Mortality_rate[51:92,5]<-2
+New_Mortality_rate[93:96,5]<-4
+New_Mortality_rate[97:163,5]<-3
+Plot_mortality<-New_Mortality_rate
+as.factor(Plot_mortality$region)
+Plot_mortality$region[Plot_mortality$region==1]<-"africa"
+Plot_mortality$region[Plot_mortality$region==2]<-"asia"
+Plot_mortality$region[Plot_mortality$region==3]<-"L.America"
+Plot_mortality$region[Plot_mortality$region==4]<-"other"
+European_settler_Mortality<-extmort4
+boxplot(European_settler_Mortality~region, data=Plot_mortality, col=rainbow(4))
+```
+
+
+
+## Problem 4. T-test about the difference between groups (5 points)
+
+Filter two regions: Africa and Latin America and compare means of
+mortality rates between these two groups. Perform a t-test to compare
+the means.
+
+```{r}
+## Develop R code here…
+Data_frame<-select(cleaned_dta, africa:extmort4)
+AFRICA<-filter(Data_frame, africa==1)
+ASIA<-filter(Data_frame, asia==1)
+OTHER<-filter(Data_frame,other==1)
+L_America<-filter(Data_frame,africa==0 & asia==0 & other==0)
+Continet<-rbind(AFRICA, ASIA, OTHER, L_America)
+Continet1<-mutate(Continet,  region= africa +asia +other)
+attach(Continet1)
+Continet1[51:92,8]<-2
+Continet1[93:96,8]<-4
+Continet1[97:163,8]<-3
+New_Continent<-Continet1
+as.factor(New_Continent$region)
+New_Continent$region[New_Continent$region==1]<-"africa"
+New_Continent$region[New_Continent$region==2]<-"asia"
+New_Continent$region[New_Continent$region==3]<-"L.America"
+New_Continent$region[New_Continent$region==4]<-"other"
+Africa_mortality<-filter(New_Continent, region == "africa" )
+L_America_mortality<-filter(New_Continent, region== "L.America")
+t.test(Africa_mortality$extmort4,L_America_mortality$extmort4)
+#
+#
+```
+
+Explain in your own words, what are the causal implication of the
+observed differences? In other words, if we observe any difference
+between the regions, does it mean that different regions cause
+difference in income and mortality rates?
+
+**Write your answer here**: ...
+The outcome shows a more than 2 times higher mortality rate in Africa (366.2865)
+than Latin America (156.8115). These may be due to low levels of gdp in Africa compared to Latin America which positively collerate with mortality rates. Low gdp may limit growth of the health system and food sector. However, 
+it is not true that different regions cause difference in income and mortality rates. Some mortalities are caused by epidemics such as weather, and even pandemics such 
+as COVID 19 which cut across continents.
+## Problem 5. Relationship between continuous variables (10 points)
+
+Develop **three** scatter plots similar to figures 1, 2 and 3 in
+(Acemoglu et al. 2001) and compute corresponding correlation coefficients. Please
+note, correlation should not necessarily be plotted and could be printed
+in a table instead.
+
+```{r}
+## Develop R code here...
+pairs(~pgp95+avexpr+extmort4, data = cleaned_dta,
+   main="Simple Scatterplot Matrix")
+#
+#
+```
+
+## Problem 6. Reproduce OLS regressions 1-6 from the Table 2 in (Acemoglu et al. 2001) (20 points)
+
+```{r}
+## Develop R code here...
+regress<-lm(pgp95~ avexpr + other + lat_abst+asia+ africa, data =cleaned_dta)
+summary(regress)
+#
+#
+```
+
+## Problem 7. Reproduce IV regressions 1, 2, 7, and 8 from the Table 4 in (Acemoglu et al. 2001) (20 points)
+
+```{r}
+
+## Develop R code here...
+#install.packages("ivreg, dependencies =TRUE")
+cleaned_dta<-cleaned_dta%>%
+mutate(logpgp95=log(pgp95),
+logextmort4=log(extmort4),
+loghjypl=log(hjypl))
+cleaned_dta<-cleaned_dta[, ! names(cleaned_dta)%in% c("pgp95","loghjypl")] 
+regress<-lm(logpgp95~ avexpr+ lat_abst+asia+ africa + 
+other+logextmort4,data=cleaned_dta)
+summary(regress)
+
+#
+#
+```
+
+# References
+
+Acemoglu, Daron, Simon Johnson, and James A Robinson. 2001. "The
+Colonial Origins of Comparative Development: An Empirical
+Investigation." American Economic Review 91 (5): 1369--1401. [https:
+//doi.org/10.1257/aer.91.5.1369](https://doi.org/10.1257/aer.91.5.1369)
